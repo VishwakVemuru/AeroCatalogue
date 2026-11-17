@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>AeroCatalogue — Aircraft & Helicopters</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    :root{
+      --navy:#0e1624;
+      --navy2:#162032;
+      --navy3:#1e2d45;
+      --gold:#c09a3a;
+      --gold2:#e8c46a;
+      --paper:#f7f3e9;
+      --paper2:#ede8da;
+      --ink:#2d2416;
+      --pencil:#7a6a4f;
+      --faint:#c4b89a;
+      --white:#fffcf5;
+      --serif:'Playfair Display',Georgia,serif;
+      --sans:'Inter',sans-serif;
+      --mono:'JetBrains Mono',monospace;
+      --r:10px;
+      /* category colors */
+      --c-narrow:#1B4F7A;
+      --c-wide:#1A6040;
+      --c-regional:#954E0A;
+      --c-turboprop:#5A2A8A;
+      --c-cargo:#8A3A10;
+      --c-bizjet:#7A5010;
+      --c-military:#3A5020;
+      --c-seaplane:#0A4A6A;
+      --c-heli:#7A1020;
+    }
+
+    html{scroll-behavior:smooth;}
+
+    body{
+      background:var(--paper);
+      font-family:var(--sans);
+      color:var(--ink);
+      min-height:100vh;
+    }
+
+    /* ── HERO ── */
+    .hero{
+      background:var(--navy);
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      position:relative;
+      overflow:hidden;
+      padding:2rem;
+    }
+
+    /* grid overlay */
+    .hero::before{
+      content:'';
+      position:absolute;inset:0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.04) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(255,255,255,0.04) 1px,transparent 1px);
+      background-size:40px 40px;
+      pointer-events:none;
+    }
+
+    /* radial glow */
+    .hero::after{
+      content:'';
+      position:absolute;
+      top:50%;left:50%;
+      transform:translate(-50%,-50%);
+      width:700px;height:700px;
+      background:radial-gradient(circle,rgba(192,154,58,0.12) 0%,transparent 70%);
+      pointer-events:none;
+    }
+
+    .hero-inner{position:relative;z-index:1;}
+
+    .hero-eyebrow{
+      font-family:var(--mono);
+      font-size:11px;
+      letter-spacing:0.2em;
+      color:var(--gold);
+      text-transform:uppercase;
+      margin-bottom:1.5rem;
+      display:flex;align-items:center;gap:12px;
+    }
+    .hero-eyebrow::before,.hero-eyebrow::after{
+      content:'';display:inline-block;width:32px;height:1px;background:var(--gold);opacity:0.6;
+    }
+
+    .hero-title{
+      font-family:var(--serif);
+      font-size:clamp(52px,10vw,96px);
+      font-weight:700;
+      color:#fff;
+      letter-spacing:-0.02em;
+      line-height:1;
+      margin-bottom:2rem;
+    }
+
+    .hero-title span{color:var(--gold);}
+
+    .typewriter-wrap{
+      height:56px;
+      display:flex;align-items:center;justify-content:center;
+      margin-bottom:2.5rem;
+    }
+
+    .typewriter-label{
+      font-family:var(--mono);
+      font-size:clamp(14px,2.5vw,22px);
+      color:rgba(255,255,255,0.55);
+      margin-right:8px;
+      letter-spacing:0.04em;
+    }
+
+    #typewriter{
+      font-family:var(--serif);
+      font-size:clamp(16px,3vw,26px);
+      color:var(--gold2);
+      font-style:italic;
+      min-width:280px;
+      text-align:left;
+      border-right:2px solid var(--gold);
+      padding-right:6px;
+      animation:blink 0.75s step-end infinite;
+    }
+    @keyframes blink{0%,100%{border-color:var(--gold);}50%{border-color:transparent;}}
+
+    .hero-stats{
+      display:flex;gap:2.5rem;justify-content:center;flex-wrap:wrap;
+    }
+    .hero-stat{
+      text-align:center;
+    }
+    .hero-stat .num{
+      font-family:var(--mono);
+      font-size:28px;
+      font-weight:500;
+      color:#fff;
+      display:block;
+    }
+    .hero-stat .lbl{
+      font-size:11px;
+      color:rgba(255,255,255,0.4);
+      text-transform:uppercase;
+      letter-spacing:0.1em;
+    }
+
+    .scroll-hint{
+      position:absolute;
+      bottom:2rem;
+      left:50%;
+      transform:translateX(-50%);
+      display:flex;flex-direction:column;align-items:center;gap:6px;
+      color:rgba(255,255,255,0.3);
+      font-size:11px;
+      font-family:var(--mono);
+      letter-spacing:0.1em;
+      text-transform:uppercase;
+      animation:bounceY 2s ease-in-out infinite;
+    }
+    .scroll-hint svg{opacity:0.4;}
+    @keyframes bounceY{0%,100%{transform:translateX(-50%) translateY(0);}50%{transform:translateX(-50%) translateY(6px);}}
+
+    /* ── STICKY FILTER BAR ── */
+    .filter-bar{
+      position:sticky;top:0;z-index:100;
+      background:rgba(247,243,233,0.95);
+      backdrop-filter:blur(10px);
+      -webkit-backdrop-filter:blur(10px);
+      border-bottom:1px solid var(--faint);
+      padding:14px 24px;
+      display:flex;gap:12px;align-items:center;flex-wrap:wrap;
+    }
+
+    .search-box{
+      display:flex;align-items:center;gap:8px;
+      background:var(--white);
+      border:1px solid var(--faint);
+      border-radius:6px;
+      padding:6px 12px;
+      flex:0 0 200px;
+    }
+    .search-box input{
+      border:none;background:transparent;outline:none;
+      font-family:var(--sans);font-size:13px;color:var(--ink);
+      width:100%;
+    }
+    .search-box input::placeholder{color:var(--faint);}
+
+    .filter-pills{display:flex;gap:6px;flex-wrap:wrap;flex:1;}
+
+    .pill{
+      font-family:var(--sans);
+      font-size:12px;font-weight:500;
+      color:var(--pencil);
+      background:var(--white);
+      border:1px solid var(--faint);
+      border-radius:20px;
+      padding:5px 14px;
+      cursor:pointer;
+      transition:background 0.18s,color 0.18s,border-color 0.18s;
+      white-space:nowrap;
+    }
+    .pill:hover{border-color:var(--pencil);color:var(--ink);}
+    .pill.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+
+    .count-badge{
+      font-family:var(--mono);
+      font-size:11px;
+      color:var(--pencil);
+      margin-left:auto;
+      white-space:nowrap;
+    }
+
+    /* ── GRID ── */
+    .catalogue{
+      max-width:1400px;
+      margin:0 auto;
+      padding:2.5rem 24px 5rem;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:20px;
+    }
+
+    /* ── CARD ── */
+    .card{
+      background:var(--white);
+      border:1px solid var(--faint);
+      border-radius:var(--r);
+      overflow:hidden;
+      cursor:pointer;
+      box-shadow:2px 3px 0 rgba(45,36,22,0.06);
+      transition:transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.25s ease;
+      position:relative;
+    }
+    .card:hover{
+      transform:translateY(-6px) scale(1.03);
+      box-shadow:0 16px 40px rgba(14,22,36,0.18);
+      z-index:2;
+    }
+    .card:hover .card-overlay{opacity:1;}
+
+    .card-img{
+      width:100%;
+      height:150px;
+      position:relative;
+      overflow:hidden;
+      background:linear-gradient(135deg,#ddd8c8,#c8c0aa);
+    }
+    .card-img img{
+      width:100%;height:100%;
+      object-fit:cover;
+      display:block;
+      transition:transform 0.4s ease;
+    }
+    .card:hover .card-img img{transform:scale(1.06);}
+
+    .card-img .fallback-icon{
+      display:none;
+      position:absolute;inset:0;
+      align-items:center;justify-content:center;
+      font-size:3rem;
+    }
+
+    .card-overlay{
+      position:absolute;inset:0;
+      background:linear-gradient(to top,rgba(14,22,36,0.6) 0%,transparent 60%);
+      opacity:0;
+      transition:opacity 0.25s;
+      display:flex;align-items:flex-end;padding:12px;
+    }
+    .card-overlay-text{
+      font-family:var(--mono);
+      font-size:10px;
+      color:rgba(255,255,255,0.9);
+      letter-spacing:0.08em;
+      text-transform:uppercase;
+    }
+
+    .card-body{padding:12px 14px 14px;}
+
+    .card-cat{
+      font-family:var(--mono);
+      font-size:9px;
+      font-weight:600;
+      letter-spacing:0.1em;
+      text-transform:uppercase;
+      padding:2px 8px;
+      border-radius:20px;
+      display:inline-block;
+      margin-bottom:6px;
+      color:#fff;
+    }
+
+    .card-name{
+      font-family:var(--serif);
+      font-size:16px;
+      font-weight:600;
+      color:var(--ink);
+      line-height:1.2;
+      margin-bottom:2px;
+    }
+
+    .card-mfg{
+      font-size:12px;
+      color:var(--pencil);
+    }
+
+    .card-specs{
+      display:flex;gap:10px;margin-top:10px;
+      border-top:1px solid var(--paper2);
+      padding-top:10px;
+    }
+
+    .card-spec{
+      flex:1;text-align:center;
+    }
+    .card-spec .sv{
+      font-family:var(--mono);
+      font-size:12px;font-weight:500;
+      color:var(--ink);display:block;
+    }
+    .card-spec .sk{
+      font-size:9px;color:var(--faint);
+      text-transform:uppercase;letter-spacing:0.06em;
+    }
+
+    /* no results */
+    .no-results{
+      grid-column:1/-1;
+      text-align:center;
+      padding:5rem 2rem;
+      color:var(--pencil);
+    }
+    .no-results h3{font-family:var(--serif);font-size:24px;margin-bottom:8px;color:var(--ink);}
+
+    /* ── MODAL ── */
+    .modal-backdrop{
+      position:fixed;inset:0;
+      background:rgba(14,22,36,0.75);
+      z-index:1000;
+      display:flex;align-items:center;justify-content:center;
+      padding:24px;
+      opacity:0;
+      pointer-events:none;
+      transition:opacity 0.25s;
+    }
+    .modal-backdrop.open{opacity:1;pointer-events:all;}
+
+    .modal{
+      background:var(--white);
+      border-radius:14px;
+      overflow:hidden;
+      max-width:720px;
+      width:100%;
+      max-height:90vh;
+      overflow-y:auto;
+      transform:translateY(32px) scale(0.97);
+      transition:transform 0.3s cubic-bezier(0.34,1.4,0.64,1);
+      box-shadow:0 32px 80px rgba(0,0,0,0.4);
+    }
+    .modal-backdrop.open .modal{transform:translateY(0) scale(1);}
+
+    .modal-img{
+      width:100%;height:260px;
+      position:relative;
+      background:linear-gradient(135deg,#ddd8c8,#c8c0aa);
+    }
+    .modal-img img{width:100%;height:100%;object-fit:cover;display:block;}
+    .modal-img .fallback-icon{
+      display:none;position:absolute;inset:0;
+      align-items:center;justify-content:center;
+      font-size:5rem;
+    }
+
+    .modal-img-overlay{
+      position:absolute;inset:0;
+      background:linear-gradient(to top,rgba(14,22,36,0.65) 0%,transparent 55%);
+      display:flex;align-items:flex-end;
+      padding:20px 24px;
+    }
+
+    .modal-img-title{
+      font-family:var(--serif);
+      font-size:32px;
+      font-weight:700;
+      color:#fff;
+      letter-spacing:-0.01em;
+      line-height:1.1;
+    }
+
+    .modal-close{
+      position:absolute;top:16px;right:16px;
+      width:36px;height:36px;
+      background:rgba(14,22,36,0.6);
+      border:none;border-radius:50%;
+      color:#fff;font-size:18px;
+      cursor:pointer;
+      display:flex;align-items:center;justify-content:center;
+      backdrop-filter:blur(4px);
+      transition:background 0.18s;
+    }
+    .modal-close:hover{background:rgba(14,22,36,0.9);}
+
+    .modal-body{padding:24px 28px 32px;}
+
+    .modal-header{
+      display:flex;align-items:center;gap:12px;
+      margin-bottom:20px;
+    }
+    .modal-cat{
+      font-family:var(--mono);
+      font-size:10px;font-weight:600;
+      letter-spacing:0.1em;
+      text-transform:uppercase;
+      padding:3px 10px;
+      border-radius:20px;
+      color:#fff;
+    }
+    .modal-mfg{
+      font-size:14px;color:var(--pencil);
+    }
+    .modal-wiki{
+      margin-left:auto;
+      font-family:var(--mono);
+      font-size:11px;
+      color:var(--pencil);
+      text-decoration:none;
+      display:flex;align-items:center;gap:4px;
+      transition:color 0.18s;
+    }
+    .modal-wiki:hover{color:var(--ink);}
+
+    .modal-about{
+      font-size:15px;
+      color:var(--pencil);
+      line-height:1.75;
+      margin-bottom:22px;
+      padding:14px 16px;
+      background:var(--paper);
+      border-radius:6px;
+      border-left:3px solid var(--gold);
+    }
+
+    .specs-grid{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:12px;
+    }
+
+    .spec-box{
+      background:var(--paper);
+      border:1px solid var(--paper2);
+      border-radius:6px;
+      padding:12px 14px;
+    }
+    .spec-key{
+      font-family:var(--mono);
+      font-size:9px;
+      color:var(--faint);
+      text-transform:uppercase;
+      letter-spacing:0.1em;
+      margin-bottom:4px;
+    }
+    .spec-val{
+      font-family:var(--mono);
+      font-size:18px;
+      font-weight:500;
+      color:var(--ink);
+      line-height:1;
+    }
+    .spec-unit{font-size:11px;color:var(--pencil);margin-left:3px;}
+
+    /* ── RESPONSIVE ── */
+    @media(max-width:1100px){.grid{grid-template-columns:repeat(3,1fr);}}
+    @media(max-width:760px){
+      .grid{grid-template-columns:repeat(2,1fr);}
+      .filter-bar{padding:10px 16px;}
+      .search-box{flex:0 0 140px;}
+      .catalogue{padding:1.5rem 16px 4rem;}
+      .specs-grid{grid-template-columns:repeat(2,1fr);}
+    }
+    @media(max-width:480px){
+      .grid{grid-template-columns:repeat(2,1fr);gap:12px;}
+      .modal-img{height:180px;}
+      .modal-img-title{font-size:22px;}
+      .modal-body{padding:16px 18px 24px;}
+    }
+  </style>
+</head>
+<body>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <p class="hero-eyebrow">Vishwak Vemuru</p>
+    <h1 class="hero-title">Aero<span>Catalogue</span></h1>
+    <div class="typewriter-wrap">
+      <span class="typewriter-label">Now viewing —</span>
+      <span id="typewriter"></span>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><span class="num">123</span><span class="lbl">Aircraft</span></div>
+      <div class="hero-stat"><span class="num">9</span><span class="lbl">Categories</span></div>
+      <div class="hero-stat"><span class="num">16</span><span class="lbl">Helicopters</span></div>
+      <div class="hero-stat"><span class="num">8</span><span class="lbl">Seaplanes</span></div>
+    </div>
+  </div>
+  <div class="scroll-hint">
+    <svg width="16" height="20" viewBox="0 0 16 20" fill="none"><rect x="1" y="1" width="14" height="18" rx="7" stroke="white" stroke-width="1.5"/><rect x="7" y="4" width="2" height="5" rx="1" fill="white"/></svg>
+    Scroll to explore
+  </div>
+</section>
+
+<!-- FILTER BAR -->
+<div class="filter-bar" id="filterBar">
+  <div class="search-box">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="5.5" cy="5.5" r="4" stroke="#c4b89a" stroke-width="1.5"/><path d="M9 9l3 3" stroke="#c4b89a" stroke-width="1.5" stroke-linecap="round"/></svg>
+    <input type="text" id="searchInput" placeholder="Search aircraft…" autocomplete="off">
+  </div>
+  <div class="filter-pills" id="filterPills"></div>
+  <span class="count-badge" id="countBadge">123 aircraft</span>
+</div>
+
+<!-- CATALOGUE GRID -->
+<main class="catalogue">
+  <div class="grid" id="grid"></div>
+</main>
+
+<!-- MODAL -->
+<div class="modal-backdrop" id="backdrop" onclick="closeModal(event)">
+  <div class="modal" id="modal">
+    <div class="modal-img" id="modalImg">
+      <img id="modalPhoto" src="" alt="">
+      <div class="fallback-icon" id="modalFallback"></div>
+      <div class="modal-img-overlay">
+        <h2 class="modal-img-title" id="modalTitle"></h2>
+      </div>
+      <button class="modal-close" onclick="closeModalDirect()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-header">
+        <span class="modal-cat" id="modalCat"></span>
+        <span class="modal-mfg" id="modalMfg"></span>
+        <a class="modal-wiki" id="modalWiki" href="#" target="_blank" rel="noopener">Wikipedia ↗</a>
+      </div>
+      <p class="modal-about" id="modalAbout"></p>
+      <div class="specs-grid" id="modalSpecs"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const CAT_LABELS = {
+  narrow:'Narrow-body Jet', wide:'Wide-body Jet', regional:'Regional Jet',
+  turboprop:'Turboprop/Bush', cargo:'Cargo Specialist', bizjet:'Bizjet/VIP',
+  military:'Military Transport', seaplane:'Seaplane/Amphibious', heli:'Helicopter'
+};
+
+const CAT_COLORS = {
+  narrow:'#1B4F7A', wide:'#1A6040', regional:'#954E0A', turboprop:'#5A2A8A',
+  cargo:'#8A3A10', bizjet:'#7A5010', military:'#3A5020', seaplane:'#0A4A6A', heli:'#7A1020'
+};
+
+const ABOUT = {
+  'a220-100':'A clean-sheet design from Bombardier, completed by Airbus — the A220-100 redefined efficiency on thin regional routes with its advanced geared turbofan engines.',
+  'a220-300':'The stretched sibling of the A220-100, offering more seats while retaining the same outstanding fuel burn per seat — a favourite for short to medium haul carriers.',
+  'a319neo':'The smallest of the neo family, built for thinner routes and challenging airports with short runways or high altitudes.',
+  'a320neo':'The world\'s best-selling single-aisle aircraft, combining CFM LEAP or PW1100G engines with a wide cabin that passengers and operators both love.',
+  'a321neo':'The longest-range member of the A320 family, capable of transcontinental routes that previously required much larger aircraft.',
+  'a321xlr':'Airbus\'s game-changing Extra Long Range variant — the XLR can fly non-stop from Europe to the US East Coast in a single-aisle jet.',
+  'b737-700':'Boeing\'s compact 737NG, widely used by Southwest Airlines and known for its versatility on short to medium routes.',
+  'b737-800':'The most successful 737 variant ever — a workhorse on routes worldwide, beloved for its reliability and economics.',
+  'b737-900er':'The longest 737NG, stretching capacity while keeping operating costs low on high-demand domestic corridors.',
+  'b737max8':'The re-engined 737, featuring LEAP-1B engines and winglets for improved efficiency — a controversial but capable aircraft.',
+  'b737max10':'The largest MAX variant, squeezing maximum capacity from the 737 platform to compete with the A321neo.',
+  'b757-200':'A legendary narrow-body that punched well above its class, flying transatlantic routes that defied its single-aisle designation.',
+  'b757-300':'The stretched 757, trading range for capacity — rare in service but effective for high-density charter operations.',
+  'md80':'The MD-80 family defined short-haul air travel through the 1980s and 90s with its distinctive rear-engine layout and narrow cabin.',
+  'md90':'An upgraded MD-80 with IAE V2500 engines offering significantly improved noise and fuel burn for its era.',
+  'b717':'A compact twin-jet derived from the MD-90, finding success with operators like Delta and Hawaiian Airlines on thin routes.',
+  'c919':'China\'s first modern narrow-body, developed by COMAC to compete directly with the A320neo and B737 MAX.',
+  'arj21':'China\'s first regional jet, developed by COMAC — a stepping stone in establishing domestic aviation manufacturing capability.',
+  'a330-200':'A versatile wide-body that serves both long-haul passengers and cargo operators with equal effectiveness around the world.',
+  'a330-300':'The original and most popular A330 variant, a twin-engine workhorse on medium to long haul routes for over three decades.',
+  'a330-900neo':'A re-engined A330 with Rolls-Royce Trent 7000 engines, offering substantially better fuel efficiency than its predecessors.',
+  'a340-300':'Airbus\'s four-engine answer to transoceanic range — pre-ETOPS rules made its quad-engine layout advantageous for overwater routes.',
+  'a340-600':'The longest commercial aircraft by fuselage at its introduction, stretching the A340 platform to carry up to 380 passengers.',
+  'a350-900':'Airbus\'s composite-intensive widebody, setting new standards for passenger comfort and fuel efficiency on long-haul routes.',
+  'a350-1000':'The stretched A350, matching the 777-300ER\'s capacity while delivering far better fuel burn per seat.',
+  'a350-900ulr':'Ultra Long Range — capable of flying 20 hours non-stop, operating the world\'s longest commercial routes for Singapore Airlines.',
+  'a380':'The world\'s largest commercial aircraft — a double-deck, four-engine superjumbo that redefined hub-to-hub travel.',
+  'b747-400':'The Queen of the Skies — the 747-400 defined premium long-haul travel for a generation with its iconic hump and global reach.',
+  'b747-8':'The final and most advanced 747 variant, with a stretched fuselage, raked wingtips, and GEnx engines for improved efficiency.',
+  'b767-300er':'A mid-size wide-body that opened transatlantic twin-engine operations before the 777 arrived, still widely used in cargo.',
+  'b777-200er':'The original long-range 777 — a twin-engine giant that revolutionised economics on long-haul with its GE90 powerplant.',
+  'b777-300er':'The workhorse of long-haul aviation — the 777-300ER\'s combination of capacity and range made it the dominant premium aircraft.',
+  'b777x':'Boeing\'s next-generation widebody, featuring folding wingtips and the world\'s largest turbofan engines for unmatched efficiency.',
+  'b787-8':'The Dreamliner — Boeing\'s carbon-composite revolution, enabling point-to-point long-haul routes that bypassed hubs entirely.',
+  'b787-9':'The most popular Dreamliner variant, stretching capacity while improving range — a favourite of carriers on ultra-long routes.',
+  'b787-10':'The longest Dreamliner, optimised for high-density medium to long-haul routes where efficiency per seat matters most.',
+  'e170':'Embraer\'s entry into the mainline regional market — a 70-seat jet that blurred the line between regional and mainline operations.',
+  'e175':'The most popular E-Jet, perfectly sized for scope clause agreements in the US market and high-frequency operations worldwide.',
+  'e190':'A larger E-Jet that challenged narrow-bodies on thinner routes with lower seat costs and a wider cabin than CRJ competitors.',
+  'e195':'Embraer\'s largest first-generation E-Jet, stretching capacity to 120 seats while retaining the family\'s operating flexibility.',
+  'e190-e2':'The re-engined E190, with Pratt & Whitney GTF engines delivering dramatic improvements in fuel burn and noise footprint.',
+  'e195-e2':'The largest E2 variant — dramatically reducing fuel burn per seat to challenge A220 and A320neo economics on thin routes.',
+  'crj200':'The ubiquitous 50-seat regional jet that shaped North American aviation for decades, still found in service across the continent.',
+  'crj700':'An enlarged CRJ that moved beyond scope clause limitations, offering mainline-quality service on thinner routes.',
+  'crj900':'Bombardier\'s stretched CRJ, fitting 90 passengers into a narrower-than-average cabin but with impressive range.',
+  'crj1000':'The largest CRJ, pushing the platform\'s limits to 100 seats — popular with European operators on thinner domestic routes.',
+  'ssj100':'Russia\'s modern regional jet, featuring western avionics and engines to target international markets alongside domestic airlines.',
+  'mrj70':'Mitsubishi\'s entry into the regional jet market — Japan\'s first domestically designed commercial jet in decades.',
+  'atr42':'ATR\'s smaller turboprop, perfectly suited for short runways and thin regional routes where jet economics don\'t work.',
+  'atr72':'The world\'s best-selling regional turboprop — efficient, reliable, and operating on thousands of short routes globally.',
+  'q400':'De Havilland\'s flagship turboprop — faster and more capable than competitors, often competing with regional jets on short routes.',
+  'kingair350':'Beechcraft\'s premium turboprop, a business and utility workhorse used for corporate travel, medevac, and surveillance.',
+  'caravan208':'The Cessna Caravan — arguably the most versatile utility aircraft ever built, serving FedEx feeder routes to jungle airstrips.',
+  'pc12':'Pilatus\'s legendary single-turboprop — combining surprising range, STOL capability, and a large cargo door in one package.',
+  'twinotter':'The Twin Otter\'s rugged dependability made it the aircraft of choice for remote operations worldwide for over 50 years.',
+  'islander':'The Britten-Norman Islander is a stubby, robust twin-piston designed for island hopping and STOL strips worldwide.',
+  'pc6':'The Pilatus Porter — legendary for its ability to operate from impossibly short mountain strips in the Swiss Alps and beyond.',
+  'letl410':'A Czech-designed twin turboprop built to operate from unprepared airstrips in extreme conditions across Africa and Asia.',
+  'an28':'Antonov\'s rugged short-field twin turboprop, developed for Soviet operations in Siberia and other remote territories.',
+  'stol701':'The Zenith STOL CH 701 is an ultralight homebuilt designed for extreme short takeoff and landing performance.',
+  'grandcaravan':'The stretched Caravan, featuring more cabin space and payload while retaining the original\'s legendary versatility.',
+  'kodiak100':'Daher\'s Kodiak 100 is a rugged single-turboprop built for humanitarian and mission aviation in the world\'s toughest environments.',
+  'b747-400f':'The 747 Freighter — the backbone of global air cargo for decades, capable of carrying outsized loads in its massive main deck.',
+  'b747-8f':'The stretched 747 freighter, increasing payload and fuel efficiency while maintaining the iconic 747 cargo capabilities.',
+  'b777f':'The world\'s most capable twin-engine freighter — Boeing\'s 777F dominates long-haul cargo with its massive payload and range.',
+  'a330-200f':'Airbus\'s dedicated freighter variant of the A330, offering comparable economics to the 767F with improved capacity.',
+  'md11f':'A three-engine wide-body freighter derived from the DC-10, still flying for major cargo carriers like FedEx and UPS.',
+  'b767-300f':'A medium-capacity freighter popular with Amazon Air and UPS for its combination of range and operating economics.',
+  'b757-200f':'A narrow-body freighter widely used for domestic express cargo operations — a DHL and UPS favourite.',
+  'atr72-600f':'ATR\'s purpose-built freighter variant, opening cargo operations on thinner routes and shorter airstrips.',
+  'skycourier':'Cessna\'s twin-engine utility aircraft designed for FedEx feeder operations, replacing aging Caravans and Navajos.',
+  'an124':'The Antonov An-124 Ruslan — one of the world\'s largest cargo aircraft, capable of lifting outsized military and industrial loads.',
+  'an225':'The largest aircraft ever built — the Antonov An-225 Mriya was capable of carrying 250 tonnes of cargo on its massive fuselage.',
+  'g280':'Gulfstream\'s mid-size entry — delivering long-range capability in a smaller package without sacrificing cabin quality.',
+  'g450':'A large-cabin Gulfstream with intercontinental range, a staple of corporate and government fleets worldwide.',
+  'g550':'One of the most capable business jets ever built — the G550\'s range and cabin set a benchmark for ultra-long-range travel.',
+  'g650er':'The Extended Range G650 — capable of flying from New York to Tokyo non-stop, or Singapore to San Francisco without refuelling.',
+  'g700':'Gulfstream\'s flagship, offering the largest cabin in business aviation alongside transcontinental range and class-leading technology.',
+  'global5500':'Bombardier\'s mid-size Global, offering a comfortable cabin and reliable transcontinental range for corporate operators.',
+  'global6500':'An extended range Global, with a cabin refined for ultra-long flights and impressive fuel efficiency from its Rolls-Royce engines.',
+  'global7500':'Bombardier\'s flagship — the largest purpose-built business jet ever, capable of flying further than any competitor.',
+  'falcon8x':'Dassault\'s flagship, offering three-engine reliability and an incredibly efficient Pratt & Whitney PW307D powerplant.',
+  'falcon10x':'Dassault\'s next-generation flagship — matching the Global 7500 in size with a distinctive oval cabin cross-section.',
+  'praetor600':'Embraer\'s flagship business jet — offering the longest range in its class with a surprisingly spacious stand-up cabin.',
+  'phenom300e':'The world\'s best-selling light business jet for multiple consecutive years — a Embraer success story.',
+  'longitude':'Cessna\'s flagship business jet, offering a stand-up cabin and transcontinental range in a mid-size package.',
+  'hondajet':'Honda\'s innovative entry into business aviation, featuring an over-wing engine mount that creates a uniquely spacious cabin.',
+  'pc24':'Pilatus\'s jet version of its PC-12 legacy — a small jet with turboprop-like short-field performance and cargo flexibility.',
+  'learjet75':'One of the last variants of the iconic Learjet line — a light jet with a long heritage dating to the 1960s.',
+  'c130j':'The Hercules — the world\'s most successful military transport, serving in over 60 nations for more than six decades.',
+  'c17':'Boeing\'s C-17 Globemaster III brings strategic airlift capability to tactical airstrips, a marvel of modern military aviation.',
+  'a400m':'Airbus\'s turboprop-powered military transport, bridging the gap between the C-130 and C-17 in capability and capacity.',
+  'c5':'The Lockheed C-5 Galaxy — one of the world\'s largest military aircraft, capable of carrying oversized vehicles and helicopters.',
+  'an70':'Ukraine\'s advanced turboprop military transport, designed to replace the An-12 with modern propfan technology.',
+  'cn235':'The CASA CN-235 is a versatile medium military transport built for both tactical airlift and maritime patrol missions.',
+  'c295':'Airbus\'s updated military turboprop, offering modern avionics and improved performance over the CN-235 for global operators.',
+  'kc390':'Embraer\'s jet-powered military transport and tanker — the most advanced aircraft in its class, operated by Brazil and others.',
+  'il76':'The Ilyushin IL-76 is a Soviet-era strategic airlifter that remains in widespread military and commercial cargo service.',
+  'y20':'China\'s Xian Y-20 is a heavy military transport designed to provide the PLA with strategic airlift comparable to the C-17.',
+  'cl415':'The Bombardier CL-415 Superscooper — a purpose-built aerial firefighter capable of scooping water from lakes in seconds.',
+  'dhc6-float':'The Twin Otter on floats — one of the most versatile floatplanes ever, serving remote coastal communities worldwide.',
+  'caravan-float':'The Caravan on Edo floats — a bush pilot\'s workhorse connecting remote lakes and coastal communities with the outside world.',
+  'icona5':'The Icon A5 is a light sport amphibious aircraft designed to make water flying accessible to recreational pilots.',
+  'lakerenegade':'The Lake Renegade is an American-built amphibian with an innovative hull design for both lake and coastal operations.',
+  'be200':'The Beriev Be-200 Altair is Russia\'s jet-powered amphibious aircraft, used for firefighting, SAR, and patrol missions.',
+  'us2':'The ShinMaywa US-2 is Japan\'s advanced turboprop flying boat, designed for open-ocean search and rescue in extreme conditions.',
+  'seastar':'The Dornier Seastar is a modern composite amphibian designed for island hopping, charter, and coastal patrol operations.',
+  'r44':'The Robinson R44 is the world\'s best-selling four-seat helicopter — an affordable and reliable piston rotorcraft.',
+  'r66':'Robinson\'s turbine-powered R66 brings jet reliability to the light helicopter market at a competitive price point.',
+  'bell206':'The Bell JetRanger is an iconic turbine helicopter that has served in police, military, news, and oil industry operations worldwide.',
+  'h125':'The Airbus H125 (formerly AS350) is the definitive high-altitude helicopter, famous for landing on Mount Everest\'s summit.',
+  'bell412':'Bell\'s twin-engine utility helicopter, widely used by military and offshore operators for medium-lift missions worldwide.',
+  'h145':'Airbus\'s twin-engine light helicopter, popular for HEMS, police, offshore, and VIP operations across Europe and beyond.',
+  'aw139':'The Leonardo AW139 is the world\'s most successful medium twin helicopter, used for offshore, SAR, and VIP transport.',
+  's76d':'Sikorsky\'s corporate helicopter — the S-76D offers airline-style comfort in a medium twin for executive transport.',
+  's92':'The Sikorsky S-92 is the premier offshore helicopter, transporting crews to oil platforms in the North Sea and Gulf of Mexico.',
+  'h225':'The H225 Super Puma is a large twin-engine helicopter used for offshore oil support and military transport worldwide.',
+  'aw101':'The Leonardo AW101 Merlin is a large military helicopter used for naval, transport, and SAR missions by multiple nations.',
+  'ch47':'The Boeing CH-47 Chinook is a tandem-rotor heavy-lift helicopter that has served militaries worldwide for over 60 years.',
+  'uh60':'The Sikorsky UH-60 Black Hawk is the US Army\'s primary utility helicopter — one of the most capable military rotorcraft ever built.',
+  'ah64':'The Boeing AH-64 Apache is the world\'s premier attack helicopter, combining firepower, sensors, and agility unmatched by peers.',
+  'ah1z':'The Bell AH-1Z Viper is the US Marine Corps\' attack helicopter, upgraded with four-blade rotors and modern targeting systems.',
+  'mi26':'The Mil Mi-26 is the world\'s largest and most powerful helicopter, capable of lifting loads that would challenge many fixed-wing aircraft.'
+};
+
+const DB = [
+// ── NARROW-BODY JETS ──────────────────────────
+{id:'a220-100',name:'A220-100',mfg:'Airbus',cat:'narrow',range:5500,pax:110,cargo:10000,cargoVol:28,runway:1500,surface:'paved',cruise:830,mtow:63100,etops:true,hotHigh:true,cold:true,missions:['scheduled','charter'],budget:['standard','premium'],wiki:'https://en.wikipedia.org/wiki/Airbus_A220',img:'✈'},
+{id:'a220-300',name:'A220-300',mfg:'Airbus',cat:'narrow',range:6300,pax:130,cargo:14000,cargoVol:36,runway:1890,surface:'paved',cruise:830,mtow:70900,etops:true,hotHigh:true,cold:true,missions:['scheduled','charter'],budget:['standard','premium'],wiki:'https://en.wikipedia.org/wiki/Airbus_A220',img:'✈'},
+{id:'a319neo',name:'A319neo',mfg:'Airbus',cat:'narrow',range:6850,pax:120,cargo:16000,cargoVol:38,runway:1850,surface:'paved',cruise:833,mtow:75500,etops:true,hotHigh:true,cold:true,missions:['scheduled','charter'],budget:['economy','standard'],wiki:'https://en.wikipedia.org/wiki/Airbus_A320neo_family',img:'✈'},
+{id:'a320neo',name:'A320neo',mfg:'Airbus',cat:'narrow',range:6300,pax:165,cargo:20000,cargoVol:38,runway:2100,surface:'paved',cruise:833,mtow:79000,etops:true,hotHigh:true,cold:true,missions:['scheduled','charter'],budget:['economy','standard'],wiki:'https://en.wikipedia.org/wiki/Airbus_A320neo_family',img:'✈'},
+{id:'a321neo',name:'A321neo',mfg:'Airbus',cat:'narrow',range:7400,pax:194,cargo:26000,cargoVol:51,runway:2200,surface:'paved',cruise:833,mtow:97000,etops:true,hotHigh:true,cold:true,missions:['scheduled','charter'],budget:['economy','standard'],wiki:'https://en.wikipedia.org/wiki/Airbus_A321neo',img:'✈'},
+{id:'a321xlr',name:'A321XLR',mfg:'Airbus',cat:'narrow',range:8700,pax:194,cargo:26000,cargoVol:51,runway:2200,surface:'paved',cruise:833,mtow:101000,etops:true,hotHigh:true,cold:true,missions:['scheduled','charter'],budget:['standard','premium'],wiki:'https://en.wikipedia.org/wiki/Airbus_A321XLR',img:'✈'},
+{id:'b737-700',name:'B737-700',mfg:'Boeing',cat:'narrow',range:6370,pax:126,cargo:16000,cargoVol:38,runway:1634,surface:'paved',cruise:834,mtow:70080,etops:true,hotHigh:true,cold:true,missions:['scheduled','charter'],budget:['economy','standard'],wiki:'https://en.wikipedia.org/wiki/Boeing_737_Classic',img:'✈'},
+{id:'b737-800',name:'B737-800',mfg:'Boeing',cat:'narrow',range:5765,pax:162,cargo:20000,cargoVol:45,runway:2090,surface:'paved',cruise:842,mtow:79016,etops:true,hotHigh:true,cold:true,missions:['scheduled','charter'],budget:['economy','standard'],wiki:'https://en.wikipedia.org/wiki/Boeing_737_Next_Generation',img:'✈'},
+{id:'b737-900er',name:'B737-900ER',mfg:'Boeing',cat:'narrow',range:5460,pax:180,cargo:23000,cargoVol:52,runway:2400,surface:'paved',cruise:842,mtow:85139,etops:true,hotHigh:true,cold:true,missions:['scheduled','charter'],budget:['economy','standard'],wiki:'https://en.wikipedia.org/wiki/Boeing_737_Next_Generation',img:'✈'},
+{id:'b737max8',name:'B737 MAX 8',mfg:'Boeing',cat:'narrow',range:6570,pax:162,cargo:20000,cargoVol:45,runway:2500,surface:'paved',cruise:839,mtow:82191,etops:true,hotHigh:true,cold:true,missions:['scheduled','charter'],budget:['economy','standard'],wiki:'https://en.wikipedia.org/wiki/Boeing_737_MAX',img:'✈'},
+{id:'b737max10',name:'B737 MAX 10',mfg:'Boeing',cat:'narrow',range:6110,pax:188,cargo:24000,cargoVol:51,runway:3000,surface:'paved',cruise:839,mtow:89765,etops:true,hotHigh:true,cold:true,missions:['scheduled'],budget:['economy','standard'],wiki:'https://en.wikipedia.org/wiki/Boeing_737_MAX',img:'✈'},
+{id:'b757-200',name:'B757-200',mfg:'Boeing',cat:'narrow',range:7220,pax:200,cargo:28000,cargoVol:56,runway:2408,surface:'paved',cruise:854,mtow:115680,etops:true,hotHigh:true,cold:true,missions:['scheduled','charter'],budget:['standard'],wiki:'https://en.wikipedia.org/wiki/Boeing_757',img:'✈'},
+{id:'b757-300',name:'B757-300',mfg:'Boeing',cat:'narrow',range:6421,pax:243,cargo:36000,cargoVol:65,runway:2800,surface:'paved',cruise:854,mtow:123830,etops:false,hotHigh:true,cold:true,missions:['scheduled','charter'],budget:['standard'],wiki:'https://en.wikipedia.org/wiki/Boeing_757',img:'✈'},
+{id:'md80',name:'MD-80',mfg:'McDonnell Douglas',cat:'narrow',range:4635,pax:155,cargo:14000,cargoVol:30,runway:2400,surface:'paved',cruise:811,mtow:63050,etops:false,hotHigh:false,cold:false,missions:['scheduled','charter'],budget:['economy'],wiki:'https://en.wikipedia.org/wiki/McDonnell_Douglas_MD-80',img:'✈'},
+{id:'md90',name:'MD-90',mfg:'McDonnell Douglas',cat:'narrow',range:3800,pax:153,cargo:13000,cargoVol:28,runway:2530,surface:'paved',cruise:811,mtow:70760,etops:false,hotHigh:false,cold:false,missions:['scheduled'],budget:['economy'],wiki:'https://en.wikipedia.org/wiki/McDonnell_Douglas_MD-90',img:'✈'},
+{id:'b717',name:'B717',mfg:'Boeing',cat:'narrow',range:2645,pax:110,cargo:11000,cargoVol:24,runway:1500,surface:'paved',cruise:811,mtow:54900,etops:false,hotHigh:false,cold:false,missions:['scheduled','charter'],budget:['economy','standard'],wiki:'https://en.wikipedia.org/wiki/Boeing_717',img:'✈'},
+{id:'c919',name:'C919',mfg:'COMAC',cat:'narrow',range:5555,pax:168,cargo:21000,cargoVol:44,runway:2200,surface:'paved',cruise:834,mtow:77300,etops:true,hotHigh:true,cold:false,missions:['scheduled'],budget:['economy','standard'],wiki:'https://en.wikipedia.org/wiki/COMAC_C919',img:'✈'},
+{id:'arj21',name:'ARJ21',mfg:'COMAC',cat:'narrow',range:3700,pax:90,cargo:8000,cargoVol:20,runway:1900,surface:'paved',cruise:810,mtow:43500,etops:false,hotHigh:true,cold:false,missions:['scheduled','charter'],budget:['economy'],wiki:'https://en.wikipedia.org/wiki/COMAC_ARJ21',img:'✈'},
+
+// ── WIDE-BODY JETS ──────────────────────────
+{id:'a330-200',name:'A330-200',mfg:'Airbus',cat:'wide',range:13450,pax:247,cargo:45000,cargoVol:140,runway:2500,surface:'paved',cruise:871,mtow:242000,etops:true,hotHigh:true,cold:true,missions:['scheduled','charter'],budget:['standard','premium'],wiki:'https://en.wikipedia.org/wiki/Airbus_A330',img:'✈'},
+{id:'a330-300',name:'A330-300',mfg:'Airbus',cat:'wide',range:11750,pax:277,cargo:45000,cargoVol:160,runway:2770,surface:'paved',cruise:871,mtow:242000,etops:true,hotHigh:true,cold:true,missions:['scheduled','charter'],budget:['standard','premium'],wiki:'https://en.wikipedia.org/wiki/Airbus_A330',img:'✈'},
+{id:'a330-900neo',name:'A330-900neo',mfg:'Airbus',cat:'wide',range:13330,pax:287,cargo:50000,cargoVol:160,runway:2770,surface:'paved',cruise:912,mtow:251000,etops:true,hotHigh:true,cold:true,missions:['scheduled','charter'],budget:['standard','premium'],wiki:'https://en.wikipedia.org/wiki/Airbus_A330neo',img:'✈'},
+{id:'a340-300',name:'A340-300',mfg:'Airbus',cat:'wide',range:13350,pax:295,cargo:47000,cargoVol:160,runway:3000,surface:'paved',cruise:880,mtow:276500,etops:false,hotHigh:true,cold:true,missions:['scheduled'],budget:['standard'],wiki:'https://en.wikipedia.org/wiki/Airbus_A340',img:'✈'},
+{id:'a340-600',name:'A340-600',mfg:'Airbus',cat:'wide',range:14600,pax:359,cargo:55000,cargoVol:190,runway:3100,surface:'paved',cruise:905,mtow:368000,etops:false,hotHigh:true,cold:true,missions:['scheduled'],budget:['standard'],wiki:'https://en.wikipedia.org/wiki/Airbus_A340',img:'✈'},
+{id:'a350-900',name:'A350-900',mfg:'Airbus',cat:'wide',range:15000,pax:314,cargo:60000,cargoVol:196,runway:2800,surface:'paved',cruise:903,mtow:280000,etops:true,hotHigh:true,cold:true,missions:['scheduled','charter'],budget:['standard','premium'],wiki:'https://en.wikipedia.org/wiki/Airbus_A350',img:'✈'},
+{id:'a350-1000',name:'A350-1000',mfg:'Airbus',cat:'wide',range:16100,pax:369,cargo:70000,cargoVol:223,runway:2900,surface:'paved',cruise:910,mtow:316000,etops:true,hotHigh:true,cold:true,missions:['scheduled','charter'],budget:['standard','premium'],wiki:'https://en.wikipedia.org/wiki/Airbus_A350',img:'✈'},
+{id:'a350-900ulr',name:'A350-900ULR',mfg:'Airbus',cat:'wide',range:18000,pax:161,cargo:30000,cargoVol:100,runway:3000,surface:'paved',cruise:903,mtow:280000,etops:true,hotHigh:true,cold:true,missions:['scheduled'],budget:['premium'],wiki:'https://en.wikipedia.org/wiki/Airbus_A350',img:'✈'},
+{id:'a380',name:'A380',mfg:'Airbus',cat:'wide',range:15200,pax:555,cargo:90000,cargoVol:230,runway:3100,surface:'paved',cruise:903,mtow:575000,etops:true,hotHigh:true,cold:true,missions:['scheduled'],budget:['standard','premium'],wiki:'https://en.wikipedia.org/wiki/Airbus_A380',img:'✈'},
+{id:'b747-400',name:'B747-400',mfg:'Boeing',cat:'wide',range:13450,pax:416,cargo:70000,cargoVol:210,runway:3200,surface:'paved',cruise:910,mtow:412775,etops:true,hotHigh:true,cold:true,missions:['scheduled','charter'],budget:['standard','premium'],wiki:'https://en.wikipedia.org/wiki/Boeing_747-400',img:'✈'},
+{id:'b747-8',name:'B747-8',mfg:'Boeing',cat:'wide',range:14310,pax:467,cargo:80000,cargoVol:220,runway:3100,surface:'paved',cruise:914,mtow:447696,etops:true,hotHigh:true,cold:true,missions:['scheduled','charter'],budget:['standard','premium'],wiki:'https://en.wikipedia.org/wiki/Boeing_747-8',img:'✈'},
+{id:'b767-300er',name:'B767-300ER',mfg:'Boeing',cat:'wide',range:11070,pax:218,cargo:40000,cargoVol:130,runway:2600,surface:'paved',cruise:851,mtow:187700,etops:true,hotHigh:true,cold:true,missions:['scheduled','charter'],budget:['standard'],wiki:'https://en.wikipedia.org/wiki/Boeing_767',img:'✈'},
+{id:'b777-200er',name:'B777-200ER',mfg:'Boeing',cat:'wide',range:13080,pax:314,cargo:65000,cargoVol:200,runway:2900,surface:'paved',cruise:905,mtow:297550,etops:true,hotHigh:true,cold:true,missions:['scheduled','charter'],budget:['standard','premium'],wiki:'https://en.wikipedia.org/wiki/Boeing_777',img:'✈'},
+{id:'b777-300er',name:'B777-300ER',mfg:'Boeing',cat:'wide',range:13650,pax:396,cargo:77000,cargoVol:226,runway:3200,surface:'paved',cruise:905,mtow:352400,etops:true,hotHigh:true,cold:true,missions:['scheduled','charter'],budget:['standard','premium'],wiki:'https://en.wikipedia.org/wiki/Boeing_777',img:'✈'},
+{id:'b777x',name:'B777X',mfg:'Boeing',cat:'wide',range:13500,pax:426,cargo:85000,cargoVol:240,runway:3000,surface:'paved',cruise:910,mtow:352400,etops:true,hotHigh:true,cold:true,missions:['scheduled'],budget:['standard','premium'],wiki:'https://en.wikipedia.org/wiki/Boeing_777X',img:'✈'},
+{id:'b787-8',name:'B787-8',mfg:'Boeing',cat:'wide',range:13530,pax:242,cargo:45000,cargoVol:148,runway:2800,surface:'paved',cruise:903,mtow:227930,etops:true,hotHigh:true,cold:true,missions:['scheduled','charter'],budget:['standard','premium'],wiki:'https://en.wikipedia.org/wiki/Boeing_787_Dreamliner',img:'✈'},
+{id:'b787-9',name:'B787-9',mfg:'Boeing',cat:'wide',range:14140,pax:296,cargo:55000,cargoVol:175,runway:2800,surface:'paved',cruise:903,mtow:254011,etops:true,hotHigh:true,cold:true,missions:['scheduled','charter'],budget:['standard','premium'],wiki:'https://en.wikipedia.org/wiki/Boeing_787_Dreamliner',img:'✈'},
+{id:'b787-10',name:'B787-10',mfg:'Boeing',cat:'wide',range:11910,pax:330,cargo:65000,cargoVol:195,runway:2900,surface:'paved',cruise:903,mtow:254011,etops:true,hotHigh:true,cold:true,missions:['scheduled'],budget:['standard','premium'],wiki:'https://en.wikipedia.org/wiki/Boeing_787_Dreamliner',img:'✈'},
+
+// ── REGIONAL JETS ──────────────────────────
+{id:'e170',name:'Embraer E170',mfg:'Embraer',cat:'regional',range:3735,pax:72,cargo:7000,cargoVol:18,runway:1644,surface:'paved',cruise:870,mtow:35990,etops:false,hotHigh:true,cold:true,missions:['scheduled','charter'],budget:['economy','standard'],wiki:'https://en.wikipedia.org/wiki/Embraer_E-Jet_family',img:'✈'},
+{id:'e175',name:'Embraer E175',mfg:'Embraer',cat:'regional',range:3740,pax:80,cargo:8000,cargoVol:20,runway:1744,surface:'paved',cruise:870,mtow:38790,etops:false,hotHigh:true,cold:true,missions:['scheduled','charter'],budget:['economy','standard'],wiki:'https://en.wikipedia.org/wiki/Embraer_E-Jet_family',img:'✈'},
+{id:'e190',name:'Embraer E190',mfg:'Embraer',cat:'regional',range:4537,pax:100,cargo:10000,cargoVol:26,runway:2040,surface:'paved',cruise:870,mtow:51800,etops:false,hotHigh:true,cold:true,missions:['scheduled','charter'],budget:['economy','standard'],wiki:'https://en.wikipedia.org/wiki/Embraer_E-Jet_family',img:'✈'},
+{id:'e195',name:'Embraer E195',mfg:'Embraer',cat:'regional',range:4260,pax:120,cargo:12000,cargoVol:30,runway:2100,surface:'paved',cruise:870,mtow:52290,etops:false,hotHigh:true,cold:true,missions:['scheduled','charter'],budget:['economy','standard'],wiki:'https://en.wikipedia.org/wiki/Embraer_E-Jet_family',img:'✈'},
+{id:'e190-e2',name:'E190-E2',mfg:'Embraer',cat:'regional',range:5278,pax:100,cargo:12000,cargoVol:26,runway:1880,surface:'paved',cruise:870,mtow:56400,etops:true,hotHigh:true,cold:true,missions:['scheduled','charter'],budget:['economy','standard'],wiki:'https://en.wikipedia.org/wiki/Embraer_E-Jet_E2_family',img:'✈'},
+{id:'e195-e2',name:'E195-E2',mfg:'Embraer',cat:'regional',range:4800,pax:130,cargo:14000,cargoVol:34,runway:1970,surface:'paved',cruise:870,mtow:61000,etops:true,hotHigh:true,cold:true,missions:['scheduled','charter'],budget:['economy','standard'],wiki:'https://en.wikipedia.org/wiki/Embraer_E-Jet_E2_family',img:'✈'},
+{id:'crj200',name:'CRJ-200',mfg:'Bombardier',cat:'regional',range:3148,pax:50,cargo:3000,cargoVol:10,runway:1580,surface:'paved',cruise:830,mtow:23133,etops:false,hotHigh:false,cold:true,missions:['scheduled','charter'],budget:['economy'],wiki:'https://en.wikipedia.org/wiki/Bombardier_CRJ200',img:'✈'},
+{id:'crj700',name:'CRJ-700',mfg:'Bombardier',cat:'regional',range:3700,pax:70,cargo:7000,cargoVol:16,runway:1600,surface:'paved',cruise:830,mtow:33020,etops:false,hotHigh:false,cold:true,missions:['scheduled','charter'],budget:['economy','standard'],wiki:'https://en.wikipedia.org/wiki/Bombardier_CRJ700_series',img:'✈'},
+{id:'crj900',name:'CRJ-900',mfg:'Bombardier',cat:'regional',range:2877,pax:90,cargo:8000,cargoVol:20,runway:1700,surface:'paved',cruise:830,mtow:36514,etops:false,hotHigh:false,cold:true,missions:['scheduled','charter'],budget:['economy','standard'],wiki:'https://en.wikipedia.org/wiki/Bombardier_CRJ900',img:'✈'},
+{id:'crj1000',name:'CRJ-1000',mfg:'Bombardier',cat:'regional',range:3004,pax:100,cargo:9000,cargoVol:22,runway:1900,surface:'paved',cruise:830,mtow:41640,etops:false,hotHigh:false,cold:true,missions:['scheduled'],budget:['economy','standard'],wiki:'https://en.wikipedia.org/wiki/Bombardier_CRJ1000',img:'✈'},
+{id:'ssj100',name:'Superjet 100',mfg:'Sukhoi',cat:'regional',range:4578,pax:98,cargo:9000,cargoVol:24,runway:1731,surface:'paved',cruise:830,mtow:49450,etops:false,hotHigh:false,cold:true,missions:['scheduled','charter'],budget:['economy'],wiki:'https://en.wikipedia.org/wiki/Sukhoi_Superjet_100',img:'✈'},
+{id:'mrj70',name:'MRJ70',mfg:'Mitsubishi',cat:'regional',range:3540,pax:70,cargo:5000,cargoVol:14,runway:1600,surface:'paved',cruise:830,mtow:39600,etops:false,hotHigh:false,cold:true,missions:['scheduled'],budget:['economy','standard'],wiki:'https://en.wikipedia.org/wiki/Mitsubishi_SpaceJet',img:'✈'},
+{id:'atr42',name:'ATR 42',mfg:'ATR',cat:'regional',range:1555,pax:48,cargo:5000,cargoVol:12,runway:1050,surface:'paved',cruise:556,mtow:18600,etops:false,hotHigh:false,cold:true,missions:['scheduled','charter'],budget:['economy'],wiki:'https://en.wikipedia.org/wiki/ATR_42',img:'✈'},
+{id:'atr72',name:'ATR 72',mfg:'ATR',cat:'regional',range:1528,pax:70,cargo:8000,cargoVol:18,runway:1290,surface:'paved',cruise:510,mtow:23000,etops:false,hotHigh:false,cold:true,missions:['scheduled','charter'],budget:['economy'],wiki:'https://en.wikipedia.org/wiki/ATR_72',img:'✈'},
+
+// ── TURBOPROPS & BUSH ──────────────────────────
+{id:'q400',name:'Dash 8 Q400',mfg:'De Havilland',cat:'turboprop',range:2040,pax:78,cargo:8000,cargoVol:18,runway:1220,surface:'paved',cruise:556,mtow:29574,etops:false,hotHigh:false,cold:true,missions:['scheduled','charter','bush'],budget:['economy'],wiki:'https://en.wikipedia.org/wiki/De_Havilland_Canada_Dash_8',img:'🛩'},
+{id:'kingair350',name:'King Air 350',mfg:'Beechcraft',cat:'turboprop',range:2780,pax:9,cargo:1500,cargoVol:4,runway:1200,surface:'unpaved',cruise:578,mtow:6804,etops:false,hotHigh:true,cold:true,missions:['charter','vip','medevac','bush'],budget:['standard','premium'],wiki:'https://en.wikipedia.org/wiki/Beechcraft_Super_King_Air',img:'🛩'},
+{id:'caravan208',name:'Cessna Caravan 208',mfg:'Cessna',cat:'turboprop',range:1982,pax:12,cargo:1200,cargoVol:3,runway:700,surface:'unpaved',cruise:344,mtow:3629,etops:false,hotHigh:true,cold:false,missions:['charter','cargo','bush','medevac'],budget:['economy'],wiki:'https://en.wikipedia.org/wiki/Cessna_208_Caravan',img:'🛩'},
+{id:'pc12',name:'Pilatus PC-12',mfg:'Pilatus',cat:'turboprop',range:3417,pax:9,cargo:1100,cargoVol:3,runway:610,surface:'unpaved',cruise:528,mtow:4740,etops:false,hotHigh:true,cold:true,missions:['charter','vip','cargo','bush','medevac'],budget:['standard','premium'],wiki:'https://en.wikipedia.org/wiki/Pilatus_PC-12',img:'🛩'},
+{id:'twinotter',name:'Twin Otter DHC-6',mfg:'De Havilland',cat:'turboprop',range:1706,pax:19,cargo:1500,cargoVol:4,runway:300,surface:'unpaved',cruise:337,mtow:5670,etops:false,hotHigh:false,cold:true,missions:['charter','cargo','bush','medevac','sar'],budget:['economy','standard'],wiki:'https://en.wikipedia.org/wiki/De_Havilland_Canada_DHC-6_Twin_Otter',img:'🛩'},
+{id:'islander',name:'Britten-Norman Islander',mfg:'Britten-Norman',cat:'turboprop',range:1400,pax:9,cargo:1000,cargoVol:2,runway:290,surface:'unpaved',cruise:274,mtow:3175,etops:false,hotHigh:false,cold:false,missions:['charter','cargo','bush'],budget:['economy'],wiki:'https://en.wikipedia.org/wiki/Britten-Norman_Islander',img:'🛩'},
+{id:'pc6',name:'Pilatus PC-6 Porter',mfg:'Pilatus',cat:'turboprop',range:830,pax:9,cargo:1000,cargoVol:2,runway:200,surface:'unpaved',cruise:222,mtow:2800,etops:false,hotHigh:true,cold:true,missions:['charter','cargo','bush','heliskiing'],budget:['economy','standard'],wiki:'https://en.wikipedia.org/wiki/Pilatus_PC-6_Porter',img:'🛩'},
+{id:'letl410',name:'Let L-410',mfg:'Let Kunovice',cat:'turboprop',range:1360,pax:19,cargo:1700,cargoVol:4,runway:510,surface:'unpaved',cruise:380,mtow:6400,etops:false,hotHigh:false,cold:true,missions:['scheduled','charter','cargo','bush'],budget:['economy'],wiki:'https://en.wikipedia.org/wiki/Let_L-410_Turbolet',img:'🛩'},
+{id:'an28',name:'Antonov An-28',mfg:'Antonov',cat:'turboprop',range:1365,pax:17,cargo:1700,cargoVol:4,runway:500,surface:'unpaved',cruise:350,mtow:6500,etops:false,hotHigh:false,cold:true,missions:['charter','cargo','bush'],budget:['economy'],wiki:'https://en.wikipedia.org/wiki/Antonov_An-28',img:'🛩'},
+{id:'stol701',name:'STOL CH 701',mfg:'Zenith',cat:'turboprop',range:900,pax:2,cargo:200,cargoVol:1,runway:50,surface:'unpaved',cruise:180,mtow:550,etops:false,hotHigh:false,cold:false,missions:['bush'],budget:['economy'],wiki:'https://en.wikipedia.org/wiki/Zenith_STOL_CH_701',img:'🛩'},
+{id:'grandcaravan',name:'Grand Caravan EX',mfg:'Cessna',cat:'turboprop',range:1982,pax:14,cargo:1500,cargoVol:3,runway:700,surface:'unpaved',cruise:344,mtow:3969,etops:false,hotHigh:true,cold:false,missions:['charter','cargo','bush','medevac'],budget:['economy','standard'],wiki:'https://en.wikipedia.org/wiki/Cessna_208_Caravan',img:'🛩'},
+{id:'kodiak100',name:'Kodiak 100',mfg:'Daher',cat:'turboprop',range:1380,pax:10,cargo:1200,cargoVol:3,runway:400,surface:'unpaved',cruise:333,mtow:3969,etops:false,hotHigh:false,cold:true,missions:['charter','cargo','bush','medevac'],budget:['standard'],wiki:'https://en.wikipedia.org/wiki/Daher_Kodiak',img:'🛩'},
+
+// ── CARGO SPECIALISTS ──────────────────────────
+{id:'b747-400f',name:'B747-400F',mfg:'Boeing',cat:'cargo',range:8230,pax:0,cargo:113000,cargoVol:820,runway:3100,surface:'paved',cruise:910,mtow:412775,etops:true,hotHigh:true,cold:true,missions:['cargo'],budget:['economy','standard','military'],wiki:'https://en.wikipedia.org/wiki/Boeing_747-400',img:'📦'},
+{id:'b747-8f',name:'B747-8F',mfg:'Boeing',cat:'cargo',range:8130,pax:0,cargo:134200,cargoVol:858,runway:3100,surface:'paved',cruise:914,mtow:447696,etops:true,hotHigh:true,cold:true,missions:['cargo'],budget:['standard','premium'],wiki:'https://en.wikipedia.org/wiki/Boeing_747-8',img:'📦'},
+{id:'b777f',name:'B777F',mfg:'Boeing',cat:'cargo',range:9070,pax:0,cargo:103000,cargoVol:644,runway:3100,surface:'paved',cruise:905,mtow:347452,etops:true,hotHigh:true,cold:true,missions:['cargo'],budget:['standard','premium'],wiki:'https://en.wikipedia.org/wiki/Boeing_777F',img:'📦'},
+{id:'a330-200f',name:'A330-200F',mfg:'Airbus',cat:'cargo',range:7400,pax:0,cargo:70000,cargoVol:436,runway:2500,surface:'paved',cruise:871,mtow:233000,etops:true,hotHigh:true,cold:true,missions:['cargo'],budget:['standard'],wiki:'https://en.wikipedia.org/wiki/Airbus_A330',img:'📦'},
+{id:'md11f',name:'MD-11F',mfg:'McDonnell Douglas',cat:'cargo',range:7240,pax:0,cargo:91000,cargoVol:560,runway:3000,surface:'paved',cruise:876,mtow:286000,etops:false,hotHigh:true,cold:true,missions:['cargo'],budget:['economy','standard'],wiki:'https://en.wikipedia.org/wiki/McDonnell_Douglas_MD-11',img:'📦'},
+{id:'b767-300f',name:'B767-300F',mfg:'Boeing',cat:'cargo',range:6025,pax:0,cargo:53000,cargoVol:320,runway:2600,surface:'paved',cruise:851,mtow:186880,etops:true,hotHigh:true,cold:true,missions:['cargo'],budget:['economy','standard'],wiki:'https://en.wikipedia.org/wiki/Boeing_767',img:'📦'},
+{id:'b757-200f',name:'B757-200F',mfg:'Boeing',cat:'cargo',range:5834,pax:0,cargo:39780,cargoVol:240,runway:2400,surface:'paved',cruise:854,mtow:116120,etops:true,hotHigh:true,cold:true,missions:['cargo'],budget:['economy','standard'],wiki:'https://en.wikipedia.org/wiki/Boeing_757',img:'📦'},
+{id:'atr72-600f',name:'ATR 72-600F',mfg:'ATR',cat:'cargo',range:1528,pax:0,cargo:8000,cargoVol:40,runway:1290,surface:'paved',cruise:510,mtow:23000,etops:false,hotHigh:false,cold:true,missions:['cargo','bush'],budget:['economy'],wiki:'https://en.wikipedia.org/wiki/ATR_72',img:'📦'},
+{id:'skycourier',name:'Cessna 408 SkyCourier',mfg:'Cessna',cat:'cargo',range:1685,pax:0,cargo:2722,cargoVol:14,runway:900,surface:'unpaved',cruise:338,mtow:6804,etops:false,hotHigh:false,cold:false,missions:['cargo','bush'],budget:['economy'],wiki:'https://en.wikipedia.org/wiki/Cessna_408_SkyCourier',img:'📦'},
+{id:'an124',name:'An-124 Ruslan',mfg:'Antonov',cat:'cargo',range:5400,pax:0,cargo:150000,cargoVol:1000,runway:3000,surface:'paved',cruise:865,mtow:405000,etops:false,hotHigh:false,cold:true,missions:['cargo','military'],budget:['military','economy'],wiki:'https://en.wikipedia.org/wiki/Antonov_An-124_Ruslan',img:'📦'},
+{id:'an225',name:'An-225 Mriya (historical)',mfg:'Antonov',cat:'cargo',range:15400,pax:0,cargo:250000,cargoVol:1500,runway:3500,surface:'paved',cruise:850,mtow:640000,etops:false,hotHigh:false,cold:false,missions:['cargo'],budget:['military'],wiki:'https://en.wikipedia.org/wiki/Antonov_An-225_Mriya',img:'📦'},
+
+// ── BIZJETS & VIP ──────────────────────────
+{id:'g280',name:'Gulfstream G280',mfg:'Gulfstream',cat:'bizjet',range:6669,pax:10,cargo:1000,cargoVol:3,runway:1500,surface:'paved',cruise:900,mtow:17374,etops:false,hotHigh:true,cold:true,missions:['vip','charter'],budget:['premium'],wiki:'https://en.wikipedia.org/wiki/Gulfstream_G280',img:'💎'},
+{id:'g450',name:'Gulfstream G450',mfg:'Gulfstream',cat:'bizjet',range:8241,pax:16,cargo:1500,cargoVol:4,runway:1600,surface:'paved',cruise:904,mtow:33838,etops:true,hotHigh:true,cold:true,missions:['vip','charter'],budget:['premium'],wiki:'https://en.wikipedia.org/wiki/Gulfstream_IV',img:'💎'},
+{id:'g550',name:'Gulfstream G550',mfg:'Gulfstream',cat:'bizjet',range:12501,pax:18,cargo:2000,cargoVol:5,runway:1800,surface:'paved',cruise:904,mtow:41277,etops:true,hotHigh:true,cold:true,missions:['vip','charter'],budget:['premium'],wiki:'https://en.wikipedia.org/wiki/Gulfstream_G550',img:'💎'},
+{id:'g650er',name:'Gulfstream G650ER',mfg:'Gulfstream',cat:'bizjet',range:13890,pax:18,cargo:2000,cargoVol:5,runway:1900,surface:'paved',cruise:956,mtow:45179,etops:true,hotHigh:true,cold:true,missions:['vip','charter'],budget:['premium'],wiki:'https://en.wikipedia.org/wiki/Gulfstream_G650',img:'💎'},
+{id:'g700',name:'Gulfstream G700',mfg:'Gulfstream',cat:'bizjet',range:13890,pax:19,cargo:2500,cargoVol:6,runway:1900,surface:'paved',cruise:956,mtow:46266,etops:true,hotHigh:true,cold:true,missions:['vip','charter'],budget:['premium'],wiki:'https://en.wikipedia.org/wiki/Gulfstream_G700',img:'💎'},
+{id:'global5500',name:'Global 5500',mfg:'Bombardier',cat:'bizjet',range:9630,pax:16,cargo:1500,cargoVol:4,runway:1900,surface:'paved',cruise:956,mtow:42300,etops:true,hotHigh:true,cold:true,missions:['vip','charter'],budget:['premium'],wiki:'https://en.wikipedia.org/wiki/Bombardier_Global_5000',img:'💎'},
+{id:'global6500',name:'Global 6500',mfg:'Bombardier',cat:'bizjet',range:11112,pax:17,cargo:1800,cargoVol:5,runway:1900,surface:'paved',cruise:956,mtow:45132,etops:true,hotHigh:true,cold:true,missions:['vip','charter'],budget:['premium'],wiki:'https://en.wikipedia.org/wiki/Bombardier_Global_6000',img:'💎'},
+{id:'global7500',name:'Global 7500',mfg:'Bombardier',cat:'bizjet',range:14260,pax:19,cargo:2000,cargoVol:5,runway:1900,surface:'paved',cruise:1000,mtow:48195,etops:true,hotHigh:true,cold:true,missions:['vip','charter'],budget:['premium'],wiki:'https://en.wikipedia.org/wiki/Bombardier_Global_7500',img:'💎'},
+{id:'falcon8x',name:'Dassault Falcon 8X',mfg:'Dassault',cat:'bizjet',range:11945,pax:16,cargo:2000,cargoVol:5,runway:1600,surface:'paved',cruise:904,mtow:33113,etops:true,hotHigh:true,cold:true,missions:['vip','charter'],budget:['premium'],wiki:'https://en.wikipedia.org/wiki/Dassault_Falcon_8X',img:'💎'},
+{id:'falcon10x',name:'Dassault Falcon 10X',mfg:'Dassault',cat:'bizjet',range:13890,pax:16,cargo:2000,cargoVol:5,runway:2000,surface:'paved',cruise:956,mtow:56000,etops:true,hotHigh:true,cold:true,missions:['vip','charter'],budget:['premium'],wiki:'https://en.wikipedia.org/wiki/Dassault_Falcon_10X',img:'💎'},
+{id:'praetor600',name:'Embraer Praetor 600',mfg:'Embraer',cat:'bizjet',range:7400,pax:12,cargo:1200,cargoVol:3,runway:1400,surface:'paved',cruise:870,mtow:20100,etops:true,hotHigh:true,cold:true,missions:['vip','charter'],budget:['premium'],wiki:'https://en.wikipedia.org/wiki/Embraer_Praetor_600',img:'💎'},
+{id:'phenom300e',name:'Phenom 300E',mfg:'Embraer',cat:'bizjet',range:3650,pax:10,cargo:500,cargoVol:2,runway:950,surface:'paved',cruise:834,mtow:8150,etops:false,hotHigh:true,cold:true,missions:['vip','charter'],budget:['premium'],wiki:'https://en.wikipedia.org/wiki/Embraer_Phenom_300',img:'💎'},
+{id:'longitude',name:'Citation Longitude',mfg:'Cessna',cat:'bizjet',range:6500,pax:12,cargo:900,cargoVol:2,runway:1500,surface:'paved',cruise:890,mtow:17236,etops:false,hotHigh:true,cold:true,missions:['vip','charter'],budget:['premium'],wiki:'https://en.wikipedia.org/wiki/Cessna_Citation_Longitude',img:'💎'},
+{id:'hondajet',name:'HondaJet Elite II',mfg:'Honda',cat:'bizjet',range:2661,pax:7,cargo:400,cargoVol:1,runway:1200,surface:'paved',cruise:782,mtow:5050,etops:false,hotHigh:false,cold:false,missions:['vip','charter'],budget:['premium'],wiki:'https://en.wikipedia.org/wiki/Honda_HA-420_HondaJet',img:'💎'},
+{id:'pc24',name:'Pilatus PC-24',mfg:'Pilatus',cat:'bizjet',range:3900,pax:10,cargo:1000,cargoVol:3,runway:800,surface:'unpaved',cruise:815,mtow:8300,etops:false,hotHigh:true,cold:true,missions:['vip','charter','bush','medevac'],budget:['premium'],wiki:'https://en.wikipedia.org/wiki/Pilatus_PC-24',img:'💎'},
+{id:'learjet75',name:'Learjet 75',mfg:'Bombardier',cat:'bizjet',range:3779,pax:9,cargo:600,cargoVol:2,runway:1700,surface:'paved',cruise:863,mtow:9752,etops:false,hotHigh:false,cold:true,missions:['vip','charter'],budget:['premium'],wiki:'https://en.wikipedia.org/wiki/Bombardier_Learjet_75',img:'💎'},
+
+// ── MILITARY TRANSPORT ──────────────────────────
+{id:'c130j',name:'C-130J Hercules',mfg:'Lockheed Martin',cat:'military',range:6852,pax:92,cargo:20000,cargoVol:170,runway:1000,surface:'unpaved',cruise:643,mtow:79380,etops:false,hotHigh:true,cold:true,missions:['military','cargo','medevac','bush'],budget:['military'],wiki:'https://en.wikipedia.org/wiki/Lockheed_C-130_Hercules',img:'🪖'},
+{id:'c17',name:'C-17 Globemaster III',mfg:'Boeing',cat:'military',range:10390,pax:102,cargo:77520,cargoVol:592,runway:2285,surface:'unpaved',cruise:830,mtow:265350,etops:false,hotHigh:true,cold:true,missions:['military','cargo','medevac'],budget:['military'],wiki:'https://en.wikipedia.org/wiki/Boeing_C-17_Globemaster_III',img:'🪖'},
+{id:'a400m',name:'A400M Atlas',mfg:'Airbus',cat:'military',range:8710,pax:116,cargo:37000,cargoVol:340,runway:900,surface:'unpaved',cruise:780,mtow:141000,etops:false,hotHigh:true,cold:true,missions:['military','cargo','medevac'],budget:['military'],wiki:'https://en.wikipedia.org/wiki/Airbus_A400M_Atlas',img:'🪖'},
+{id:'c5',name:'C-5 Galaxy',mfg:'Lockheed Martin',cat:'military',range:7400,pax:73,cargo:122470,cargoVol:985,runway:2530,surface:'paved',cruise:833,mtow:381000,etops:false,hotHigh:false,cold:true,missions:['military','cargo'],budget:['military'],wiki:'https://en.wikipedia.org/wiki/Lockheed_C-5_Galaxy',img:'🪖'},
+{id:'an70',name:'AN-70',mfg:'Antonov',cat:'military',range:5000,pax:200,cargo:47000,cargoVol:420,runway:800,surface:'unpaved',cruise:750,mtow:132000,etops:false,hotHigh:false,cold:true,missions:['military','cargo'],budget:['military'],wiki:'https://en.wikipedia.org/wiki/Antonov_An-70',img:'🪖'},
+{id:'cn235',name:'CASA CN-235',mfg:'Airbus',cat:'military',range:4355,pax:46,cargo:6000,cargoVol:48,runway:930,surface:'unpaved',cruise:460,mtow:16500,etops:false,hotHigh:true,cold:true,missions:['military','cargo','medevac','sar'],budget:['military'],wiki:'https://en.wikipedia.org/wiki/CASA/IPTN_CN-235',img:'🪖'},
+{id:'c295',name:'C-295',mfg:'Airbus',cat:'military',range:5600,pax:71,cargo:9250,cargoVol:72,runway:670,surface:'unpaved',cruise:480,mtow:23200,etops:false,hotHigh:true,cold:true,missions:['military','cargo','medevac','sar'],budget:['military'],wiki:'https://en.wikipedia.org/wiki/CASA/IPTN_CN-235',img:'🪖'},
+{id:'kc390',name:'KC-390',mfg:'Embraer',cat:'military',range:6200,pax:80,cargo:26000,cargoVol:200,runway:1300,surface:'unpaved',cruise:870,mtow:81000,etops:false,hotHigh:true,cold:true,missions:['military','cargo','medevac'],budget:['military'],wiki:'https://en.wikipedia.org/wiki/Embraer_KC-390',img:'🪖'},
+{id:'il76',name:'IL-76',mfg:'Ilyushin',cat:'military',range:7500,pax:140,cargo:60000,cargoVol:440,runway:1800,surface:'unpaved',cruise:800,mtow:210000,etops:false,hotHigh:false,cold:true,missions:['military','cargo'],budget:['military'],wiki:'https://en.wikipedia.org/wiki/Ilyushin_Il-76',img:'🪖'},
+{id:'y20',name:'Y-20',mfg:'Xian',cat:'military',range:7800,pax:200,cargo:66000,cargoVol:520,runway:2200,surface:'paved',cruise:800,mtow:220000,etops:false,hotHigh:false,cold:true,missions:['military','cargo'],budget:['military'],wiki:'https://en.wikipedia.org/wiki/Xian_Y-20',img:'🪖'},
+
+// ── SEAPLANES & AMPHIBIOUS ──────────────────────────
+{id:'cl415',name:'Bombardier CL-415',mfg:'Bombardier',cat:'seaplane',range:2426,pax:0,cargo:6000,cargoVol:8,runway:0,surface:'water',cruise:376,mtow:19890,etops:false,hotHigh:false,cold:false,missions:['sar','cargo'],budget:['military','standard'],wiki:'https://en.wikipedia.org/wiki/Canadair_CL-415',img:'🌊'},
+{id:'dhc6-float',name:'Twin Otter (Float)',mfg:'De Havilland',cat:'seaplane',range:1706,pax:19,cargo:1500,cargoVol:4,runway:0,surface:'water',cruise:337,mtow:5670,etops:false,hotHigh:false,cold:true,missions:['charter','cargo','bush','sar'],budget:['economy','standard'],wiki:'https://en.wikipedia.org/wiki/De_Havilland_Canada_DHC-6_Twin_Otter',img:'🌊'},
+{id:'caravan-float',name:'Caravan (Float)',mfg:'Cessna',cat:'seaplane',range:1982,pax:12,cargo:1200,cargoVol:3,runway:0,surface:'water',cruise:344,mtow:3629,etops:false,hotHigh:false,cold:false,missions:['charter','cargo','bush'],budget:['economy','standard'],wiki:'https://en.wikipedia.org/wiki/Cessna_208_Caravan',img:'🌊'},
+{id:'icona5',name:'Icon A5',mfg:'Icon Aircraft',cat:'seaplane',range:1000,pax:2,cargo:100,cargoVol:0,runway:0,surface:'water',cruise:176,mtow:650,etops:false,hotHigh:false,cold:false,missions:['charter'],budget:['premium'],wiki:'https://en.wikipedia.org/wiki/Icon_A5',img:'🌊'},
+{id:'lakerenegade',name:'Lake Renegade',mfg:'Lake Aircraft',cat:'seaplane',range:1200,pax:4,cargo:300,cargoVol:1,runway:0,surface:'water',cruise:200,mtow:1250,etops:false,hotHigh:false,cold:false,missions:['charter','bush'],budget:['standard'],wiki:'https://en.wikipedia.org/wiki/Lake_Renegade',img:'🌊'},
+{id:'be200',name:'Beriev Be-200',mfg:'Beriev',cat:'seaplane',range:3850,pax:44,cargo:7500,cargoVol:20,runway:0,surface:'water',cruise:700,mtow:41000,etops:false,hotHigh:false,cold:false,missions:['sar','cargo','charter'],budget:['military','standard'],wiki:'https://en.wikipedia.org/wiki/Beriev_Be-200',img:'🌊'},
+{id:'us2',name:'ShinMaywa US-2',mfg:'ShinMaywa',cat:'seaplane',range:4700,pax:20,cargo:3000,cargoVol:8,runway:0,surface:'water',cruise:560,mtow:47700,etops:false,hotHigh:false,cold:false,missions:['sar','naval'],budget:['military'],wiki:'https://en.wikipedia.org/wiki/ShinMaywa_US-2',img:'🌊'},
+{id:'seastar',name:'Dornier Seastar',mfg:'Dornier',cat:'seaplane',range:1680,pax:12,cargo:1000,cargoVol:3,runway:0,surface:'water',cruise:330,mtow:5350,etops:false,hotHigh:false,cold:false,missions:['charter','cargo','bush'],budget:['standard','premium'],wiki:'https://en.wikipedia.org/wiki/Dornier_Seastar',img:'🌊'},
+
+// ── HELICOPTERS ──────────────────────────
+{id:'r44',name:'Robinson R44',mfg:'Robinson',cat:'heli',range:560,pax:3,cargo:300,cargoVol:1,runway:0,surface:'any',cruise:203,mtow:1134,etops:false,hotHigh:false,cold:false,missions:['charter','offshore','hems'],budget:['economy','standard'],wiki:'https://en.wikipedia.org/wiki/Robinson_R44',img:'🚁',heli:true,hover:true},
+{id:'r66',name:'Robinson R66',mfg:'Robinson',cat:'heli',range:650,pax:4,cargo:400,cargoVol:1,runway:0,surface:'any',cruise:222,mtow:1225,etops:false,hotHigh:false,cold:false,missions:['charter','offshore','hems'],budget:['economy','standard'],wiki:'https://en.wikipedia.org/wiki/Robinson_R66',img:'🚁',heli:true,hover:true},
+{id:'bell206',name:'Bell 206 JetRanger',mfg:'Bell',cat:'heli',range:748,pax:4,cargo:400,cargoVol:1,runway:0,surface:'any',cruise:222,mtow:1451,etops:false,hotHigh:false,cold:true,missions:['charter','offshore','hems'],budget:['economy','standard'],wiki:'https://en.wikipedia.org/wiki/Bell_206',img:'🚁',heli:true,hover:true},
+{id:'h125',name:'Airbus H125',mfg:'Airbus',cat:'heli',range:660,pax:5,cargo:1000,cargoVol:1,runway:0,surface:'any',cruise:241,mtow:2250,etops:false,hotHigh:true,cold:true,missions:['charter','offshore','hems','heliskiing','sling'],budget:['standard'],wiki:'https://en.wikipedia.org/wiki/Eurocopter_AS350_%C3%89cureuil',img:'🚁',heli:true,hover:true},
+{id:'bell412',name:'Bell 412',mfg:'Bell',cat:'heli',range:759,pax:13,cargo:2700,cargoVol:5,runway:0,surface:'any',cruise:259,mtow:5400,etops:false,hotHigh:false,cold:true,missions:['charter','offshore','hems','sar','military','sling'],budget:['standard','military'],wiki:'https://en.wikipedia.org/wiki/Bell_412',img:'🚁',heli:true,hover:true},
+{id:'h145',name:'Airbus H145',mfg:'Airbus',cat:'heli',range:650,pax:9,cargo:1600,cargoVol:3,runway:0,surface:'any',cruise:260,mtow:3700,etops:false,hotHigh:true,cold:true,missions:['hems','charter','offshore','sar'],budget:['standard','premium'],wiki:'https://en.wikipedia.org/wiki/Airbus_Helicopters_H145',img:'🚁',heli:true,hover:true},
+{id:'aw139',name:'Leonardo AW139',mfg:'Leonardo',cat:'heli',range:1061,pax:15,cargo:2900,cargoVol:5,runway:0,surface:'any',cruise:306,mtow:6800,etops:false,hotHigh:true,cold:true,missions:['offshore','sar','hems','vip','naval'],budget:['standard','premium'],wiki:'https://en.wikipedia.org/wiki/AgustaWestland_AW139',img:'🚁',heli:true,hover:true},
+{id:'s76d',name:'Sikorsky S-76D',mfg:'Sikorsky',cat:'heli',range:833,pax:12,cargo:2100,cargoVol:4,runway:0,surface:'any',cruise:287,mtow:5307,etops:false,hotHigh:false,cold:true,missions:['offshore','vip','hems','sar'],budget:['premium'],wiki:'https://en.wikipedia.org/wiki/Sikorsky_S-76',img:'🚁',heli:true,hover:true},
+{id:'s92',name:'Sikorsky S-92',mfg:'Sikorsky',cat:'heli',range:999,pax:19,cargo:4536,cargoVol:8,runway:0,surface:'any',cruise:280,mtow:12020,etops:false,hotHigh:false,cold:true,missions:['offshore','sar','vip','military','naval'],budget:['premium','military'],wiki:'https://en.wikipedia.org/wiki/Sikorsky_S-92',img:'🚁',heli:true,hover:true},
+{id:'h225',name:'H225 Super Puma',mfg:'Airbus',cat:'heli',range:857,pax:24,cargo:4750,cargoVol:9,runway:0,surface:'any',cruise:285,mtow:11000,etops:false,hotHigh:false,cold:true,missions:['offshore','sar','vip','military'],budget:['premium','military'],wiki:'https://en.wikipedia.org/wiki/Eurocopter_EC225_Super_Puma',img:'🚁',heli:true,hover:true},
+{id:'aw101',name:'Leonardo AW101 Merlin',mfg:'Leonardo',cat:'heli',range:926,pax:30,cargo:5440,cargoVol:12,runway:0,surface:'any',cruise:278,mtow:15600,etops:false,hotHigh:false,cold:true,missions:['military','sar','naval'],budget:['military'],wiki:'https://en.wikipedia.org/wiki/AgustaWestland_AW101',img:'🚁',heli:true,hover:true},
+{id:'ch47',name:'Boeing CH-47 Chinook',mfg:'Boeing',cat:'heli',range:741,pax:55,cargo:9525,cargoVol:20,runway:0,surface:'any',cruise:296,mtow:22680,etops:false,hotHigh:false,cold:true,missions:['military','sling','cargo'],budget:['military'],wiki:'https://en.wikipedia.org/wiki/Boeing_CH-47_Chinook',img:'🚁',heli:true,hover:true},
+{id:'uh60',name:'Sikorsky UH-60 Black Hawk',mfg:'Sikorsky',cat:'heli',range:592,pax:14,cargo:3600,cargoVol:5,runway:0,surface:'any',cruise:296,mtow:10660,etops:false,hotHigh:true,cold:true,missions:['military','hems','sar'],budget:['military'],wiki:'https://en.wikipedia.org/wiki/Sikorsky_UH-60_Black_Hawk',img:'🚁',heli:true,hover:true},
+{id:'ah64',name:'Boeing AH-64 Apache',mfg:'Boeing',cat:'heli',range:476,pax:2,cargo:771,cargoVol:0,runway:0,surface:'any',cruise:293,mtow:10433,etops:false,hotHigh:true,cold:true,missions:['military'],budget:['military'],wiki:'https://en.wikipedia.org/wiki/Boeing_AH-64_Apache',img:'🚁',heli:true,hover:true},
+{id:'ah1z',name:'Bell AH-1Z Viper',mfg:'Bell',cat:'heli',range:685,pax:2,cargo:0,cargoVol:0,runway:0,surface:'any',cruise:296,mtow:8390,etops:false,hotHigh:true,cold:true,missions:['military','naval'],budget:['military'],wiki:'https://en.wikipedia.org/wiki/Bell_AH-1Z_Viper',img:'🚁',heli:true,hover:true},
+{id:'mi26',name:'Mil Mi-26',mfg:'Mil',cat:'heli',range:800,pax:90,cargo:20000,cargoVol:30,runway:0,surface:'any',cruise:295,mtow:56000,etops:false,hotHigh:false,cold:true,missions:['military','cargo','sling'],budget:['military'],wiki:'https://en.wikipedia.org/wiki/Mil_Mi-26',img:'🚁',heli:true,hover:true},
+]
+
+// ── TYPEWRITER ──
+const NAMES = [
+  'Boeing 747-400','Airbus A380','Gulfstream G700','Lockheed C-130J Hercules',
+  'Sikorsky UH-60 Black Hawk','Concorde\'s successor?','Airbus A350-900ULR',
+  'Boeing CH-47 Chinook','Bombardier Global 7500','Beriev Be-200 Altair',
+  'Leonardo AW139','ShinMaywa US-2','Dassault Falcon 10X','Embraer KC-390',
+  'Antonov An-124 Ruslan','Pilatus PC-12'
+];
+let twIdx=0, twChar=0, twDeleting=false, twEl=document.getElementById('typewriter');
+function tick(){
+  const word=NAMES[twIdx];
+  if(!twDeleting){
+    twEl.textContent=word.slice(0,++twChar);
+    if(twChar===word.length){twDeleting=true;setTimeout(tick,1800);return;}
+    setTimeout(tick,55);
+  } else {
+    twEl.textContent=word.slice(0,--twChar);
+    if(twChar===0){twDeleting=false;twIdx=(twIdx+1)%NAMES.length;}
+    setTimeout(tick,twChar===0?400:28);
+  }
+}
+setTimeout(tick,600);
+
+// ── FILTER STATE ──
+let activeFilter='all', searchQ='';
+
+// ── BUILD FILTER PILLS ──
+const cats=['all',...Object.keys(CAT_LABELS)];
+const pillsEl=document.getElementById('filterPills');
+cats.forEach(c=>{
+  const b=document.createElement('button');
+  b.className='pill'+(c==='all'?' active':'');
+  b.textContent=c==='all'?'All':CAT_LABELS[c];
+  b.onclick=()=>{
+    activeFilter=c;
+    document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+    b.classList.add('active');
+    render();
+  };
+  pillsEl.appendChild(b);
+});
+
+document.getElementById('searchInput').addEventListener('input',e=>{
+  searchQ=e.target.value.toLowerCase().trim();
+  render();
+});
+
+// ── RENDER GRID ──
+function render(){
+  const q=searchQ;
+  const filtered=DB.filter(ac=>{
+    const catOk=activeFilter==='all'||ac.cat===activeFilter;
+    const searchOk=!q||ac.name.toLowerCase().includes(q)||ac.mfg.toLowerCase().includes(q)||(CAT_LABELS[ac.cat]||'').toLowerCase().includes(q);
+    return catOk&&searchOk;
+  });
+
+  document.getElementById('countBadge').textContent=`${filtered.length} aircraft`;
+
+  const grid=document.getElementById('grid');
+  if(filtered.length===0){
+    grid.innerHTML=`<div class="no-results"><h3>No aircraft found</h3><p>Try adjusting your search or filter.</p></div>`;
+    return;
+  }
+
+  grid.innerHTML=filtered.map(ac=>buildCard(ac)).join('');
+  // attach click
+  grid.querySelectorAll('.card').forEach((el,i)=>{
+    el.addEventListener('click',()=>openModal(filtered[i]));
+  });
+}
+
+// ── BUILD CARD ──
+function buildCard(ac){
+  const color=CAT_COLORS[ac.cat]||'#7a6a4f';
+  const label=CAT_LABELS[ac.cat]||ac.cat;
+  return `
+  <div class="card">
+    <div class="card-img">
+      <img src="images/aircraft/${ac.id}.jpg" alt="${ac.name}" loading="lazy"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+      <div class="fallback-icon" style="display:none;background:linear-gradient(135deg,#ddd8c8,#c8c0aa);">${ac.heli?'🚁':'✈'}</div>
+      <div class="card-overlay"><span class="card-overlay-text">View details</span></div>
+    </div>
+    <div class="card-body">
+      <span class="card-cat" style="background:${color}">${label}</span>
+      <div class="card-name">${ac.name}</div>
+      <div class="card-mfg">${ac.mfg}</div>
+      <div class="card-specs">
+        <div class="card-spec"><span class="sv">${ac.range>=1000?(ac.range/1000).toFixed(1)+'k':ac.range}</span><span class="sk">Range km</span></div>
+        <div class="card-spec"><span class="sv">${ac.pax||'—'}</span><span class="sk">Pax</span></div>
+        <div class="card-spec"><span class="sv">${ac.cruise}</span><span class="sk">km/h</span></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── MODAL ──
+function openModal(ac){
+  const color=CAT_COLORS[ac.cat]||'#7a6a4f';
+  const label=CAT_LABELS[ac.cat]||ac.cat;
+  const about=ABOUT[ac.id]||`The ${ac.name} is a ${label.toLowerCase()} manufactured by ${ac.mfg}.`;
+
+  document.getElementById('modalTitle').textContent=ac.name;
+  document.getElementById('modalMfg').textContent=ac.mfg;
+  document.getElementById('modalCat').textContent=label;
+  document.getElementById('modalCat').style.background=color;
+  document.getElementById('modalAbout').textContent=about;
+  document.getElementById('modalWiki').href=ac.wiki||`https://en.wikipedia.org/wiki/${encodeURIComponent(ac.name)}`;
+
+  const photo=document.getElementById('modalPhoto');
+  const fallback=document.getElementById('modalFallback');
+  photo.style.display='block';
+  fallback.style.display='none';
+  photo.src=`images/aircraft/${ac.id}.jpg`;
+  photo.onerror=()=>{photo.style.display='none';fallback.style.display='flex';fallback.textContent=ac.heli?'🚁':'✈';};
+
+  const fmt=(v,unit,label)=>`<div class="spec-box"><div class="spec-key">${label}</div><div class="spec-val">${v!==0&&v?v.toLocaleString():'—'}<span class="spec-unit">${unit}</span></div></div>`;
+  document.getElementById('modalSpecs').innerHTML=
+    fmt(ac.range,'km','Range')+
+    fmt(ac.pax,'pax','Max Pax')+
+    fmt(ac.cargo?Math.round(ac.cargo/1000):'—',ac.cargo?'t':'','Max Cargo')+
+    fmt(ac.cruise,'km/h','Cruise Speed')+
+    fmt(ac.runway||'N/A',ac.runway?'m':'','Runway Req.')+
+    fmt(ac.mtow?Math.round(ac.mtow/1000):'—',ac.mtow?'t':'','MTOW');
+
+  document.getElementById('backdrop').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+function closeModal(e){
+  if(e.target===document.getElementById('backdrop')) closeModalDirect();
+}
+function closeModalDirect(){
+  document.getElementById('backdrop').classList.remove('open');
+  document.body.style.overflow='';
+}
+
+// keyboard close
+document.addEventListener('keydown',e=>{if(e.key==='Escape') closeModalDirect();});
+
+// ── INIT ──
+render();
+</script>
+</body>
+</html>
